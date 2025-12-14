@@ -1,14 +1,6 @@
 package com.NetRoyale.patterns.singleton;
 
-/**
- * Singleton Pattern - GameManager
- * Manages game state: Elixir, Timer, and game status
- *
- * Purpose: Memastikan hanya ada satu instance yang mengatur state game
- * - Mengelola Elixir untuk player dan enemy
- * - Mengelola timer game (2 menit)
- * - Mengelola status running/paused
- */
+// Singleton untuk manage game state
 public class GameManager {
     private static GameManager instance;
 
@@ -63,7 +55,6 @@ public class GameManager {
         paused = false;
     }
 
-    // Elixir management
     public void regenerateElixir(float delta) {
         if (!running || paused) return;
 
@@ -100,7 +91,6 @@ public class GameManager {
         }
     }
 
-    // Timer management
     public void decrementTime() {
         if (!running || paused) return;
 
@@ -111,7 +101,6 @@ public class GameManager {
         }
     }
 
-    // Getters
     public float getPlayerElixir() { return playerElixir; }
     public float getEnemyElixir() { return enemyElixir; }
     public int getGameTime() { return gameTime; }

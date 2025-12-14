@@ -15,7 +15,7 @@ import com.NetRoyale.managers.GameStateManager;
 import com.NetRoyale.managers.RenderManager;
 import com.NetRoyale.models.*;
 import com.NetRoyale.patterns.factory.UnitFactory;
-import com.NetRoyale.patterns.RandomAIStrategy;
+// import com.NetRoyale.patterns.RandomAIStrategy;
 
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class GameScreen implements Screen {
         gameState.reset();
         gameState.initializeTowers();
         gameState.setRunning(true);
-        gameState.setAiStrategy(new RandomAIStrategy());
+        // gameState.setAiStrategy(new RandomAIStrategy());
         
         elixirTimer = 0;
         aiTimer = 0;
@@ -91,7 +91,7 @@ public class GameScreen implements Screen {
                 .filter(e -> e.getTeam() == Team.ENEMY)
                 .collect(java.util.stream.Collectors.toList());
                 
-            gameState.getAiStrategy().execute(gameState.getEnemyElixir(), players, enemies);
+            // gameState.getAiStrategy().execute(gameState.getEnemyElixir(), players, enemies);
             aiTimer = 0;
         }
 
