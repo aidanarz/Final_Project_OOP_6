@@ -1,7 +1,7 @@
 package com.NetRoyale;
 
 import com.badlogic.gdx.Game;
-import com.NetRoyale.screens.DeckBuilderScreenV2;
+import com.NetRoyale.screens.DeckBuilderScreen;
 import com.NetRoyale.managers.RenderManager;
 
 /**
@@ -15,7 +15,7 @@ public class NetRoyale extends Game {
         RenderManager.getInstance();
         
         // Start with deck builder screen V2 (HTML style)
-        setScreen(new DeckBuilderScreenV2(this));
+        setScreen(new DeckBuilderScreen(this));
     }
 
     @Override

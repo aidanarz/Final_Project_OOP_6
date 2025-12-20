@@ -2,7 +2,7 @@ package com.NetRoyale.patterns.strategy;
 
 import com.NetRoyale.models.UnitData;
 
-// Level 2: Normal (1.3x)
+// Level 2: Easy (1.3x)
 public class Level2Strategy implements LevelStrategy {
     
     @Override
@@ -12,7 +12,7 @@ public class Level2Strategy implements LevelStrategy {
     
     @Override
     public String getLevelName() {
-        return "Level 2: Normal";
+        return "Level 2: Easy";
     }
     
     @Override
@@ -39,6 +39,6 @@ public class Level2Strategy implements LevelStrategy {
     
     @Override
     public String getLevelColor() {
-        return "🟡";
+        return "🔵";
     }
 }
