@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.NetRoyale.NetRoyale;
 import com.NetRoyale.managers.GameStateManager;
 import com.NetRoyale.managers.RenderManager;
+import com.NetRoyale.managers.TileManager;
 import com.NetRoyale.managers.TowerAnimationManager;
 import com.NetRoyale.managers.UnitAnimationManager;
 import com.NetRoyale.models.*;
@@ -22,6 +23,7 @@ import com.NetRoyale.patterns.facade.GameFacade;
 import com.NetRoyale.patterns.command.CommandHistory;
 import com.NetRoyale.patterns.factory.UnitFactory;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.graphics.Texture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +45,10 @@ public class GameScreen implements Screen {
     
     private NetRoyale game;
     private RenderManager renderManager;
+    private TileManager tileManager;
     private TowerAnimationManager towerAnimationManager;
     private UnitAnimationManager unitAnimationManager;
+    private Texture bridgeTexture;
     
     // Facade Pattern - Single point of access
     private GameFacade gameFacade;
@@ -59,8 +63,10 @@ public class GameScreen implements Screen {
     public GameScreen(NetRoyale game) {
         this.game = game;
         this.renderManager = RenderManager.getInstance();
+        this.tileManager = TileManager.getInstance();
         this.towerAnimationManager = TowerAnimationManager.getInstance();
         this.unitAnimationManager = UnitAnimationManager.getInstance();
+        this.bridgeTexture = new Texture(Gdx.files.internal("1 Tiles/bridge.png"));
         this.dragStart = new Vector2();
         
         // Initialize using Facade
@@ -195,6 +201,8 @@ public class GameScreen implements Screen {
         sr.setProjectionMatrix(renderManager.getCamera().combined);
         
         drawBackground(sr);
+        drawHorizontalPaths(batch);  // Draw tile paths for horizontal roads
+        drawBridges(batch);  // Draw bridge textures on top of tiles
         drawSpawnZone(sr);
         drawEntities(sr, batch, font);
         drawProjectiles(sr);
@@ -207,14 +215,100 @@ public class GameScreen implements Screen {
     }
 
     private void drawBackground(ShapeRenderer sr) {
+        // Background sederhana - hanya river dan bridge
         sr.begin(ShapeRenderer.ShapeType.Filled);
+        
+        // River (biru)
         sr.setColor(0.365f, 0.612f, 0.925f, 1);
         sr.rect(GAME_WIDTH / 2 - 30, 0, 60, GAME_HEIGHT);
-        sr.setColor(0.843f, 0.8f, 0.784f, 1);
-        sr.rect(GAME_WIDTH / 2 - 35, 80, 70, 40);
-        sr.rect(GAME_WIDTH / 2 - 35, GAME_HEIGHT - 120, 70, 40);
-        sr.rect(GAME_WIDTH / 2 - 35, GAME_HEIGHT / 2 - 20, 70, 40);
+        
         sr.end();
+    }
+    
+    private void drawBridges(SpriteBatch batch) {
+        // Draw bridge textures instead of rectangles
+        batch.begin();
+        
+        // Bridge bawah (lower bridge) - diperbesar
+        batch.draw(bridgeTexture, GAME_WIDTH / 2 - 50, 70, 100, 60);
+        
+        // Bridge atas (upper bridge) - diperbesar
+        batch.draw(bridgeTexture, GAME_WIDTH / 2 - 50, GAME_HEIGHT - 130, 100, 60);
+        
+        batch.end();
+    }
+    
+    private void drawHorizontalPaths(SpriteBatch batch) {
+        // Load FieldsTile_31 untuk archer-bridge path, FieldsTile_32 untuk king-archer path
+        if (tileManager.getTileTexture("path1") != null && tileManager.getTileTexture("path2") != null) {
+            batch.begin();
+            com.badlogic.gdx.graphics.Texture tile31 = tileManager.getTileTexture("path1");
+            com.badlogic.gdx.graphics.Texture tile32 = tileManager.getTileTexture("path2");
+            
+            // PLAYER SIDE PATHS (menggunakan tile32 untuk king-archer)
+            // Path vertikal: Player king tower ke archer tower bawah
+            for (float y = 100; y < 240; y += 32) {
+                batch.draw(tile32, 60 - 15, y, 30, 32);
+            }
+            
+            // Path horizontal: Player king tower area ke archer tower bawah
+            for (float x = 60; x < 150; x += 32) {
+                batch.draw(tile32, x, 85, 32, 30);
+            }
+            
+            // Path vertikal: Player king tower ke archer tower atas
+            for (float y = 240; y < 380; y += 32) {
+                batch.draw(tile32, 60 - 15, y, 30, 32);
+            }
+            
+            // Path horizontal: Player king tower area ke archer tower atas
+            for (float x = 60; x < 150; x += 32) {
+                batch.draw(tile32, x, 365, 32, 30);
+            }
+            
+            // Path horizontal bawah: Player archer tower ke bridge (tile31)
+            for (float x = 150; x < GAME_WIDTH / 2 - 35; x += 32) {
+                batch.draw(tile31, x, 85, 32, 30);
+            }
+            
+            // Path horizontal atas: Player archer tower ke bridge (tile31)
+            for (float x = 150; x < GAME_WIDTH / 2 - 35; x += 32) {
+                batch.draw(tile31, x, 365, 32, 30);
+            }
+            
+            // ENEMY SIDE PATHS
+            // Path horizontal bawah: Bridge ke Enemy archer tower (tile31)
+            for (float x = GAME_WIDTH / 2 + 35; x < 700; x += 32) {
+                batch.draw(tile31, x, 85, 32, 30);
+            }
+            
+            // Path horizontal atas: Bridge ke Enemy archer tower (tile31)
+            for (float x = GAME_WIDTH / 2 + 35; x < 700; x += 32) {
+                batch.draw(tile31, x, 365, 32, 30);
+            }
+            
+            // Path horizontal: Enemy archer tower bawah ke king tower area (tile32)
+            for (float x = 700; x < 790; x += 32) {
+                batch.draw(tile32, x, 85, 32, 30);
+            }
+            
+            // Path horizontal: Enemy archer tower atas ke king tower area (tile32)
+            for (float x = 700; x < 790; x += 32) {
+                batch.draw(tile32, x, 365, 32, 30);
+            }
+            
+            // Path vertikal: Enemy king tower ke archer tower bawah (tile32)
+            for (float y = 100; y < 240; y += 32) {
+                batch.draw(tile32, GAME_WIDTH - 60 - 15, y, 30, 32);
+            }
+            
+            // Path vertikal: Enemy king tower ke archer tower atas (tile32)
+            for (float y = 240; y < 380; y += 32) {
+                batch.draw(tile32, GAME_WIDTH - 60 - 15, y, 30, 32);
+            }
+            
+            batch.end();
+        }
     }
 
     private void drawSpawnZone(ShapeRenderer sr) {
@@ -232,24 +326,47 @@ public class GameScreen implements Screen {
         Array<Entity> entities = gameFacade.getAllEntities();
         entities.sort((a, b) -> Float.compare(a.getPosition().y, b.getPosition().y));
         
+        // First pass: Draw shadows FIRST (behind everything)
+        for (Entity e : entities) {
+            Vector2 pos = e.getPosition();
+            float size = e.getData().getSize();
+            boolean isTower = e instanceof TowerEntity;
+            
+            // Shadow - different for tower vs units
+            sr.begin(ShapeRenderer.ShapeType.Filled);
+            sr.setColor(0, 0, 0, 0.3f);
+            if (isTower) {
+                // Tower shadow: rectangular at base
+                sr.rect(pos.x - size * 0.8f, pos.y - size + 2, size * 1.6f, size * 0.4f);
+            } else {
+                // Unit shadow: elliptical
+                sr.ellipse(pos.x - size, pos.y + size / 2 - size * 0.3f, size * 2, size * 0.6f);
+            }
+            sr.end();
+        }
+        
+        // Second pass: Draw all sprites (on top of shadows)
+        batch.begin();
         for (Entity e : entities) {
             Vector2 pos = e.getPosition();
             float size = e.getData().getSize();
             boolean isPlayer = e.getTeam() == Team.PLAYER;
             boolean isTower = e instanceof TowerEntity;
             
-            // Shadow
-            sr.begin(ShapeRenderer.ShapeType.Filled);
-            sr.setColor(0, 0, 0, 0.3f);
-            sr.ellipse(pos.x - size, pos.y + size / 2 - size * 0.3f, size * 2, size * 0.6f);
-            sr.end();
-            
-            // Draw with sprite animation
+            // Draw sprite animation
             if (isTower) {
                 drawTowerWithAnimation(batch, (TowerEntity) e, pos, size);
             } else {
                 drawUnitWithAnimation(batch, e, pos, size, isPlayer);
             }
+        }
+        batch.end();
+        
+        // Third pass: Draw HP bars (on top of everything)
+        for (Entity e : entities) {
+            Vector2 pos = e.getPosition();
+            float size = e.getData().getSize();
+            boolean isPlayer = e.getTeam() == Team.PLAYER;
             
             // HP bar
             sr.begin(ShapeRenderer.ShapeType.Filled);
@@ -264,29 +381,33 @@ public class GameScreen implements Screen {
     }
     
     private void drawTowerWithAnimation(SpriteBatch batch, TowerEntity tower, Vector2 pos, float size) {
+        // Tentukan tipe tower berdasarkan isKing
         String towerType = tower.isKing() ? "king" : "princess";
         TextureRegion currentFrame = towerAnimationManager.getCurrentFrame(towerType, tower.getStateTime());
         
         if (currentFrame != null) {
-            batch.begin();
+            // Tower sprite frame: 60x130 pixels (aspect ratio 1:2.17)
+            // Semua tower menggunakan ukuran yang sama (archer tower size)
             
-            // Tower size menyesuaikan shape tower (kotak size*2 x size*2 + bendera 15px)
-            // Total height tower shape = size*2 + 15, kita buat sprite sedikit lebih besar
-            float spriteWidth = size * 2.2f;   // Sedikit lebih lebar dari shape
-            float spriteHeight = size * 2.5f;  // Tinggi proporsional
+            // Perbesar 1.5x (1 + 1/2) untuk semua tower
+            float baseWidth = size * 2.8f * 1.5f;
+            float spriteWidth = baseWidth * 1.0f;
             
-            // POSISI TETAP - anchor di tengah bawah
+            // Maintain aspect ratio but limit height
+            float aspectRatio = 130f / 60f; // 2.17
+            float maxHeight = size * 3.2f * 1.5f;
+            float spriteHeight = Math.min(spriteWidth * aspectRatio, maxHeight);
+            
+            // Anchor at bottom center of tower base
             float drawX = pos.x - spriteWidth / 2;
-            float drawY = pos.y - size;
+            float drawY = pos.y - size + 5; // Slightly above base
             
-            // Simple draw - static, tidak animasi
+            // Draw tower sprite with proper proportions
             batch.draw(currentFrame, 
-                      drawX,           // X position
-                      drawY,           // Y position
+                      drawX,           // X position (center aligned)
+                      drawY,           // Y position (bottom aligned)
                       spriteWidth,     // Width
-                      spriteHeight);   // Height
-            
-            batch.end();
+                      spriteHeight);   // Height (proportional)
         }
     }
 
@@ -299,27 +420,31 @@ public class GameScreen implements Screen {
         );
         
         if (currentFrame != null) {
-            batch.begin();
-            
-            // Ukuran sprite MENYESUAIKAN SHAPE:
-            // - Circle shape: diameter = size * 2
-            // - Rectangle shape (giant/golem): width = size, height = size * 1.5
+            // Ukuran sprite yang lebih besar dan jelas
+            // Base pada ukuran collision shape
             String unitKey = entity.getKey();
             float spriteWidth, spriteHeight;
             
+            // Ukuran dasar berdasarkan collision shape size (diperbesar)
+            float baseSize = size * 2.8f; // Diperbesar dari 1.8f ke 2.8f
+            
             if (unitKey.equals("giant") || unitKey.equals("golem")) {
-                // Shape rectangle: size x size*1.5
-                spriteWidth = size * 2.2f;   // Sedikit lebih lebar untuk visual
-                spriteHeight = size * 3f;    // 1.5x tinggi + extra untuk kepala
+                // Unit besar: lebih besar dan imposing
+                spriteWidth = baseSize * 1.6f;   // Diperbesar dari 1.4f
+                spriteHeight = baseSize * 1.8f;  // Diperbesar dari 1.6f
+            } else if (unitKey.equals("goblin")) {
+                // Goblin: tetap kecil tapi lebih jelas
+                spriteWidth = baseSize * 1.0f;   // Diperbesar dari 0.8f
+                spriteHeight = baseSize * 1.0f;  
             } else {
-                // Shape circle: diameter size*2
-                spriteWidth = size * 2.4f;   // Diameter + sedikit extra
-                spriteHeight = size * 2.4f;  // Square untuk sprite 64x64
+                // Unit normal: ukuran yang lebih besar dan jelas
+                spriteWidth = baseSize * 1.2f;   // Diperbesar dari 1.0f     
+                spriteHeight = baseSize * 1.2f;  
             }
             
-            // POSISI TETAP - anchor di tengah bawah seperti run.png
+            // Posisi anchor di bottom center, align dengan shadow
             float drawX = pos.x - spriteWidth / 2;
-            float drawY = pos.y - size;  // Bottom di ground
+            float drawY = pos.y - size + 2; // Sedikit di atas ground untuk visual yang lebih baik
             
             // Flip sprite based on team
             boolean flipX = (entity.getTeam() == Team.ENEMY);
@@ -340,8 +465,6 @@ public class GameScreen implements Screen {
                           spriteWidth,          // Width
                           spriteHeight);        // Height
             }
-            
-            batch.end();
         } else {
             // Fallback to shape if animation not found
             drawUnitShapeFallback(entity, pos, size, isPlayer);
@@ -478,5 +601,9 @@ public class GameScreen implements Screen {
     public void hide() {}
 
     @Override
-    public void dispose() {}
+    public void dispose() {
+        if (bridgeTexture != null) {
+            bridgeTexture.dispose();
+        }
+    }
 }
