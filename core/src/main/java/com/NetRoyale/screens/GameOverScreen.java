@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.NetRoyale.NetRoyale;
 import com.NetRoyale.managers.RenderManager;
 import com.NetRoyale.patterns.singleton.LevelManager;
+import com.NetRoyale.network.ScoreClient;
 import com.badlogic.gdx.math.Vector3;
 
 /**
@@ -50,6 +51,12 @@ public class GameOverScreen implements Screen {
         if (victory) {
             levelManager.onLevelComplete();
             isGameCompleted = levelManager.hasCompletedAllLevels();
+            // Send a small fixed score to the server for wins
+            try {
+                ScoreClient.sendScoreAsync("Player", 15);
+            } catch (Throwable t) {
+                // best-effort: ignore
+            }
         } else {
             levelManager.onLevelFailed();
             isGameCompleted = false;
