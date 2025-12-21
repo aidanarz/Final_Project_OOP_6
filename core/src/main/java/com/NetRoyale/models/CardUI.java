@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.graphics.Texture;
 
 // Card UI
 public class CardUI {
@@ -17,7 +18,8 @@ public class CardUI {
     private boolean disabled;
     private boolean dragging;
     private Vector2 dragOffset;
-    
+    private Texture cardImage;
+
     public static final float CARD_WIDTH = 70f;
     public static final float CARD_HEIGHT = 95f;
 
@@ -29,6 +31,15 @@ public class CardUI {
         this.disabled = false;
         this.dragging = false;
         this.dragOffset = new Vector2();
+
+        try {
+            // Mencari file di assets/cards/nama_pasukan.png
+            this.cardImage = new Texture(Gdx.files.internal("cards/" + key + "_icon.png"));
+        } catch (Exception e) {
+            // Jika gambar tidak ada, biarkan null (nanti pakai icon text biasa)
+            this.cardImage = null;
+            Gdx.app.log("CardUI", "Gambar tidak ditemukan: " + key);
+        }
     }
 
     public void render(ShapeRenderer sr, SpriteBatch batch, BitmapFont font) {
@@ -43,7 +54,7 @@ public class CardUI {
         }
         sr.rect(bounds.x, bounds.y, bounds.width, bounds.height);
         sr.end();
-        
+
         // Border
         sr.begin(ShapeRenderer.ShapeType.Line);
         if (selected) {
@@ -56,38 +67,43 @@ public class CardUI {
         sr.rect(bounds.x, bounds.y, bounds.width, bounds.height);
         Gdx.gl.glLineWidth(1);
         sr.end();
-        
+
         // Elixir badge (drop shape in top-left)
         sr.begin(ShapeRenderer.ShapeType.Filled);
         sr.setColor(0.588f, 0.478f, 0.863f, 1); // Purple
         float badgeSize = 20;
         sr.circle(bounds.x + badgeSize / 2 + 2, bounds.y + bounds.height - badgeSize / 2 - 2, badgeSize / 2);
         sr.end();
-        
+
         // Draw content
         batch.begin();
-        
+
         // Elixir cost
         font.setColor(Color.WHITE);
         font.getData().setScale(0.7f);
         String costStr = String.valueOf(unit.getCost());
         font.draw(batch, costStr, bounds.x + 8, bounds.y + bounds.height - 5);
-        
-        // Icon
-        font.getData().setScale(2f);
-        font.setColor(disabled ? Color.GRAY : Color.BLACK);
-        font.draw(batch, unit.getIcon(), bounds.x + 20, bounds.y + 60);
-        
+
+        if (cardImage != null) {
+            float padding = 5;
+            float imgSize = bounds.width - (padding * 2);
+            batch.draw(cardImage, bounds.x + padding, bounds.y + 20, imgSize, imgSize);
+        } else {
+            font.getData().setScale(2f);
+            font.setColor(disabled ? Color.GRAY : Color.BLACK);
+            font.draw(batch, unit.getIcon(), bounds.x + 20, bounds.y + 60);
+        }
+
         // Name
         font.getData().setScale(0.5f);
         font.setColor(Color.DARK_GRAY);
         font.draw(batch, unit.getName(), bounds.x + 5, bounds.y + 15);
-        
+
         // Type
         font.getData().setScale(0.4f);
         font.setColor(Color.GRAY);
         font.draw(batch, unit.getType(), bounds.x + 5, bounds.y + 5);
-        
+
         font.getData().setScale(1f);
         batch.end();
     }
