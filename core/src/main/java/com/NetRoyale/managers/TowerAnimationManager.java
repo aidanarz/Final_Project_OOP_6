@@ -3,18 +3,23 @@ package com.NetRoyale.managers;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import java.util.HashMap;
+import java.util.Map;
 import com.badlogic.gdx.Gdx;
 
 // Manager untuk animasi tower
 public class TowerAnimationManager {
     private static TowerAnimationManager instance;
     
-    private Texture towerSpriteSheet;
-    private Animation<TextureRegion> towerAnimation;
-    private TextureRegion[] frames;
+    private Map<String, Texture> towerTextures;
+    private Map<String, Animation<TextureRegion>> towerAnimations;
+    private Map<String, TextureRegion[]> towerFrames;
     
     private TowerAnimationManager() {
-        loadTowerAnimation();
+        towerTextures = new HashMap<>();
+        towerAnimations = new HashMap<>();
+        towerFrames = new HashMap<>();
+        loadTowerAnimations();
     }
     
     public static TowerAnimationManager getInstance() {
@@ -24,63 +29,87 @@ public class TowerAnimationManager {
         return instance;
     }
     
-    private void loadTowerAnimation() {
+    private void loadTowerAnimations() {
+        // Load King Tower (7.png)
+        loadTowerAnimation("king", "Archertower/7.png", 6);
+        
+        // Load Archer Tower (4.png)
+        loadTowerAnimation("princess", "Archertower/4.png", 6);
+    }
+    
+    private void loadTowerAnimation(String towerType, String path, int frameCount) {
         try {
             // Load the sprite sheet
-            towerSpriteSheet = new Texture(Gdx.files.internal("Archertower/7.png"));
+            Texture spriteSheet = new Texture(Gdx.files.internal(path));
+            towerTextures.put(towerType, spriteSheet);
             
-            System.out.println("Tower sprite sheet loaded: " + towerSpriteSheet.getWidth() + "x" + towerSpriteSheet.getHeight());
+            System.out.println(towerType + " tower sprite loaded: " + spriteSheet.getWidth() + "x" + spriteSheet.getHeight());
             
-            // Split menggunakan TextureRegion.split seperti contoh run.png
-            // Asumsikan ada 7 frame horizontal
-            int frameWidth = towerSpriteSheet.getWidth() / 7;
-            int frameHeight = towerSpriteSheet.getHeight();
+            // Split menggunakan TextureRegion.split
+            int frameWidth = spriteSheet.getWidth() / frameCount;
+            int frameHeight = spriteSheet.getHeight();
             
-            TextureRegion[][] frames2D = TextureRegion.split(towerSpriteSheet, frameWidth, frameHeight);
+            TextureRegion[][] frames2D = TextureRegion.split(spriteSheet, frameWidth, frameHeight);
             
-            // Ambil 7 frames dari row pertama
-            frames = new TextureRegion[7];
-            for (int i = 0; i < 7; i++) {
+            // Ambil frames dari row pertama
+            TextureRegion[] frames = new TextureRegion[frameCount];
+            for (int i = 0; i < frameCount; i++) {
                 frames[i] = frames2D[0][i];
             }
+            towerFrames.put(towerType, frames);
             
-            System.out.println("Frames created: " + frames.length + " (" + frameWidth + "x" + frameHeight + " each)");
+            System.out.println(towerType + " tower frames: " + frames.length + " (" + frameWidth + "x" + frameHeight + " each)");
             
-            // Create animation - lebih lambat untuk bendera berkibar
-            // 1f/6f = 6 FPS untuk animasi yang smooth dan tidak terlalu cepat
-            towerAnimation = new Animation<>(1f/6f, frames);
-            towerAnimation.setPlayMode(Animation.PlayMode.LOOP);
+            // Create animation
+            Animation<TextureRegion> animation = new Animation<>(1f/6f, frames);
+            animation.setPlayMode(Animation.PlayMode.LOOP);
+            towerAnimations.put(towerType, animation);
             
         } catch (Exception e) {
-            System.err.println("Failed to load tower animation: " + e.getMessage());
+            System.err.println("Failed to load " + towerType + " tower animation: " + e.getMessage());
             e.printStackTrace();
         }
     }
     
-    // Tower static, return frame pertama
-    public TextureRegion getCurrentFrame(float stateTime) {
-        if (frames != null && frames.length > 0) {
-            // Return first frame only - tower tidak animasi
-            return frames[0];
+    /**
+     * Get animated frame based on stateTime and tower type
+     * Untuk animasi bendera berkibar pada tower
+     */
+    public TextureRegion getCurrentFrame(String towerType, float stateTime) {
+        Animation<TextureRegion> animation = towerAnimations.get(towerType);
+        if (animation != null) {
+            return animation.getKeyFrame(stateTime, true);
         }
         return null;
     }
     
-    public TextureRegion getFrame(int index) {
+    /**
+     * Get specific frame (for static display)
+     */
+    public TextureRegion getFrame(String towerType, int index) {
+        TextureRegion[] frames = towerFrames.get(towerType);
         if (frames != null && index >= 0 && index < frames.length) {
             return frames[index];
         }
         return null;
     }
     
-    public int getFrameWidth() {
+    /**
+     * Get frame width
+     */
+    public int getFrameWidth(String towerType) {
+        TextureRegion[] frames = towerFrames.get(towerType);
         if (frames != null && frames.length > 0) {
             return frames[0].getRegionWidth();
         }
         return 0;
     }
     
-    public int getFrameHeight() {
+    /**
+     * Get frame height
+     */
+    public int getFrameHeight(String towerType) {
+        TextureRegion[] frames = towerFrames.get(towerType);
         if (frames != null && frames.length > 0) {
             return frames[0].getRegionHeight();
         }
@@ -88,8 +117,11 @@ public class TowerAnimationManager {
     }
     
     public void dispose() {
-        if (towerSpriteSheet != null) {
-            towerSpriteSheet.dispose();
+        for (Texture texture : towerTextures.values()) {
+            texture.dispose();
         }
+        towerTextures.clear();
+        towerAnimations.clear();
+        towerFrames.clear();
     }
 }

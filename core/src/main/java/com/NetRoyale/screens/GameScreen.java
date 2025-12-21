@@ -264,7 +264,8 @@ public class GameScreen implements Screen {
     }
     
     private void drawTowerWithAnimation(SpriteBatch batch, TowerEntity tower, Vector2 pos, float size) {
-        TextureRegion currentFrame = towerAnimationManager.getCurrentFrame(tower.getStateTime());
+        String towerType = tower.isKing() ? "king" : "princess";
+        TextureRegion currentFrame = towerAnimationManager.getCurrentFrame(towerType, tower.getStateTime());
         
         if (currentFrame != null) {
             batch.begin();
